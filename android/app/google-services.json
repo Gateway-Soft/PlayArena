@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "957786893349",
+    "project_id": "play-arena-e83d8",
+    "storage_bucket": "play-arena-e83d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957786893349:android:8e5ba7f9ac4bc02a0423cc",
+        "android_client_info": {
+          "package_name": "com.example.playarena"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "957786893349-k0rm5am1cu8ig6uj43motbea85r7uih4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.playarena",
+            "certificate_hash": "0b62ff6f8b43d0ba5264985cdb3cbf013fcda095"
+          }
+        },
+        {
+          "client_id": "957786893349-ijo8vg3djlq26v08ci50pajr77l2olsd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzKCnNo9zSZ9Y3oe0Opg2XRk4J5fkTMIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "957786893349-ijo8vg3djlq26v08ci50pajr77l2olsd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
