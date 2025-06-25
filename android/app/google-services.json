@@ -37,6 +37,13 @@
             {
               "client_id": "957786893349-ijo8vg3djlq26v08ci50pajr77l2olsd.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "957786893349-te2cq8sss12nfl85cu5ctaufvr3anjmo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.playarena"
+              }
             }
           ]
         }
