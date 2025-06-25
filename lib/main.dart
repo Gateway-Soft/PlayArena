@@ -5,6 +5,8 @@ import 'package:playarena/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 import ' providers/auth_provider.dart';
+import ' providers/owner_provider.dart';
+import ' providers/user_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/user_or_owner_selection_screen.dart';
 
@@ -25,7 +27,11 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppAuthProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()), // ✅ Added for Theme Switch
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AppAuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => OwnerProvider()),// ✅ Added for Theme Switch
       ],
       child: const MyApp(),
     ),
@@ -57,7 +63,6 @@ class MyApp extends StatelessWidget {
         '/user/signup': (context) => const UserSignUpScreen(),
         '/user/home': (context) => const UserHomeScreen(),
         '/user/profile': (context) => const UserProfileScreen(),
-
         '/owner/login': (context) => const OwnerLoginScreen(),
         '/owner/signup': (context) => const OwnerSignUpScreen(),
         '/owner/dashboard': (context) => const OwnerDashboardScreen(),
