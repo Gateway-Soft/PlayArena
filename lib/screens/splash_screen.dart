@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,28 +11,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLogin();
+    _navigateToRoleScreen();
   }
 
-  Future<void> _checkLogin() async {
+  Future<void> _navigateToRoleScreen() async {
     await Future.delayed(const Duration(seconds: 2));
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      Navigator.pushReplacementNamed(context, '/login');
-    } else {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      final role = doc.data()?['role'];
-      if (role == 'user') {
-        Navigator.pushReplacementNamed(context, '/user/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/owner/dashboard');
-      }
-    }
+    Navigator.pushReplacementNamed(context, '/select-role');
   }
 
   @override
