@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../../ providers/auth_provider.dart';
 import '../../widgets/ users/turf_card.dart';
 import '../../widgets/common/custom_drawer.dart';
 
