@@ -1,0 +1,10 @@
+{
+  "@@locale": "en",
+  "appTitle": "PlayArena",
+  "settings": "Settings",
+  "enableNotifications": "Enable Notifications",
+  "changeLanguage": "Change Language",
+  "appTheme": "App Theme",
+  "appVersion": "App Version",
+  "logout": "Logout"
+}
