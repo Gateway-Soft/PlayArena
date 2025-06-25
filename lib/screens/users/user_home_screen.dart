@@ -37,10 +37,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     }
   }
 
-  void _logout() async {
-    await Provider.of<AppAuthProvider>(context, listen: false).signOut();
-    Navigator.pushNamedAndRemoveUntil(context, '/select-role', (_) => false);
-  }
 
   @override
   Widget build(BuildContext context) {
