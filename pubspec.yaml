@@ -12,6 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # 🔤 Localization Support
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
   # 🔥 Firebase Dependencies
   firebase_core: ^2.32.0
   firebase_auth: ^4.17.5
@@ -27,11 +32,8 @@ dependencies:
   # 💾 Local Storage
   shared_preferences: ^2.2.2
 
-  # 🌍 Internationalization
-  intl: ^0.18.1
-
   # 🔍 App Info
-  package_info_plus: ^8.3.0   # ✅ Upgraded to resolve conflict with web
+  package_info_plus: ^8.3.0   # ✅ Resolved for web compatibility
 
   # 🔐 Google Sign-In
   google_sign_in: ^6.2.1
@@ -55,12 +57,8 @@ flutter:
   assets:
     - assets/
     - assets/PlayArena splash screen logo.jpg
-#  localizations:
-#    arb-dir: lib/l10n
-#    template-arb-file: app_en.arb
-#    output-localization-file: app_localizations.dart
 
-
+  # Optional font setup
   # fonts:
   #   - family: YourFont
   #     fonts:

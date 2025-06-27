@@ -7,7 +7,7 @@ import ' providers/auth_provider.dart';
 import ' providers/locale_provider.dart';
 import ' providers/owner_provider.dart';
 import ' providers/user_provider.dart';
-import 'l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart'; // ✅ Already imported
 import 'screens/splash_screen.dart';
 import 'screens/user_or_owner_selection_screen.dart';
 import 'screens/users/user_login_screen.dart';
@@ -49,21 +49,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PlayArena',
+
+      // 🔥 THEME
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.currentTheme,
+
+      // 🌍 LOCALIZATION
       locale: localeProvider.locale,
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ta'),
-        Locale('hi'),
-      ],
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      supportedLocales: AppLocalizations.supportedLocales, // ✅ Use from app_localizations.dart
+      localizationsDelegates: AppLocalizations.localizationsDelegates, // ✅ Use from app_localizations.dart
+
+      // ✅ NAVIGATION
       home: const SplashScreen(),
       routes: {
         '/select-role': (context) => const UserOrOwnerSelectionScreen(),
