@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../ providers/auth_provider.dart';
-import '../../helpers/role_checker.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -24,7 +23,11 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
         emailController.text.trim(),
         passwordController.text.trim(),
       );
-      checkUserRole(context);
+
+      final role = await Provider.of<AppAuthProvider>(context, listen: false).getCurrentUserRole();
+      if (role == 'user') {
+        Navigator.pushNamedAndRemoveUntil(context, '/user/home', (route) => false);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
     }
@@ -52,7 +55,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
         }
       }
 
-      checkUserRole(context);
+      final updatedRole = await Provider.of<AppAuthProvider>(context, listen: false).getCurrentUserRole();
+      if (updatedRole == 'user') {
+        Navigator.pushNamedAndRemoveUntil(context, '/user/home', (route) => false);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
     }

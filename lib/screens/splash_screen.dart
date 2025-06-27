@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../ providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,13 +13,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToRoleScreen();
+    _handleNavigation();
   }
 
-  Future<void> _navigateToRoleScreen() async {
+  Future<void> _handleNavigation() async {
     await Future.delayed(const Duration(seconds: 2));
-    Navigator.pushReplacementNamed(context, '/select-role');
+
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    final isLoggedIn = await authProvider.checkIfLoggedIn();
+
+    if (isLoggedIn && authProvider.user != null) {
+      final role = await authProvider.getCurrentUserRole(); // ✅ Corrected here
+      if (role == 'user') {
+        Navigator.pushReplacementNamed(context, '/user/home');
+      } else if (role == 'owner') {
+        Navigator.pushReplacementNamed(context, '/owner/dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/select-role');
+      }
+    } else {
+      Navigator.pushReplacementNamed(context, '/select-role');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

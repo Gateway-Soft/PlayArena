@@ -35,7 +35,8 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
         'createdAt': Timestamp.now(),
       });
 
-      Navigator.pushReplacementNamed(context, '/user/home');
+      // ✅ prevent back to signup screen
+      Navigator.pushNamedAndRemoveUntil(context, '/user/home', (route) => false);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Sign-Up Failed: $e")));
     }

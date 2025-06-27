@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../ providers/auth_provider.dart';
 
-
 class OwnerSignUpScreen extends StatefulWidget {
   const OwnerSignUpScreen({super.key});
 
@@ -36,7 +35,8 @@ class _OwnerSignUpScreenState extends State<OwnerSignUpScreen> {
         'createdAt': Timestamp.now(),
       });
 
-      Navigator.pushReplacementNamed(context, '/owner/dashboard');
+      // ✅ prevent back to signup screen
+      Navigator.pushNamedAndRemoveUntil(context, '/owner/dashboard', (route) => false);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Sign-Up Failed: $e")));
     }

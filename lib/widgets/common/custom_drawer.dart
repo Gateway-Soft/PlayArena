@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../ providers/auth_provider.dart';
 import '../../theme/theme_provider.dart';
- // ✅ Add theme provider
 
 class CustomDrawer extends StatelessWidget {
   final String userName;
@@ -69,16 +68,25 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 title: const Text('Dark Mode'),
                 value: themeProvider.currentTheme == ThemeMode.dark,
-                onChanged: (val) => themeProvider.toggleTheme(val), // ✅ Pass bool
+                onChanged: (val) => themeProvider.toggleTheme(val),
               ),
 
-
+              // 🔓 Logout
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
-                onTap: () {
-                  Provider.of<AppAuthProvider>(context, listen: false).signOut();
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+                onTap: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('isLoggedIn');      // ✅ Clear login flag
+                  await prefs.remove('loggedRole');      // ✅ Clear role
+
+                  await Provider.of<AppAuthProvider>(context, listen: false).signOut();
+
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/select-role',
+                        (route) => false,
+                  );
                 },
               ),
 
@@ -97,7 +105,7 @@ class CustomDrawer extends StatelessWidget {
                     const SizedBox(height: 5),
                     GestureDetector(
                       onTap: () {
-                        // You can launch a real link using url_launcher
+                        // Add logic using url_launcher if needed
                       },
                       child: const Text('Terms of Service / Privacy Policy',
                           style: TextStyle(
