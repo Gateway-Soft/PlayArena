@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../ providers/auth_provider.dart';
 
 class OwnerLoginScreen extends StatefulWidget {
@@ -16,6 +17,47 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
   final passwordController = TextEditingController();
   bool isLoading = false;
 
+  // 🔁 Role Check Navigator
+  Future<void> checkUserRoleAndNavigate() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(uid).get();
+
+    if (userDoc.exists && ownerDoc.exists) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Choose Role'),
+          content: const Text('This account is registered as both User and Owner.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/user/home'); // ✅ User Home
+              },
+              child: const Text('User'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/owner/home'); // ✅ Owner Home
+              },
+              child: const Text('Owner'),
+            ),
+          ],
+        ),
+      );
+    } else if (ownerDoc.exists) {
+      Navigator.pushReplacementNamed(context, '/owner/home'); // ✅ Owner Home
+    } else if (userDoc.exists) {
+      Navigator.pushReplacementNamed(context, '/user/home'); // ✅ User Home
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Access Denied: No role assigned')),
+      );
+    }
+  }
+
   void loginWithEmail() async {
     setState(() => isLoading = true);
     try {
@@ -23,11 +65,7 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
         emailController.text.trim(),
         passwordController.text.trim(),
       );
-
-      final role = await Provider.of<AppAuthProvider>(context, listen: false).getCurrentUserRole();
-      if (role == 'owner') {
-        Navigator.pushNamedAndRemoveUntil(context, '/owner/dashboard', (route) => false);
-      }
+      await checkUserRoleAndNavigate();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
     }
@@ -42,9 +80,9 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
 
       final user = FirebaseAuth.instance.currentUser;
 
-      if (user != null && role == null) {
-        final doc = await FirebaseFirestore.instance.collection('owners').doc(user.uid).get();
-        if (!doc.exists) {
+      if (user != null) {
+        final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(user.uid).get();
+        if (!ownerDoc.exists) {
           await FirebaseFirestore.instance.collection('owners').doc(user.uid).set({
             'name': user.displayName ?? '',
             'email': user.email,
@@ -53,11 +91,7 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
             'createdAt': Timestamp.now(),
           });
         }
-      }
-
-      final updatedRole = await Provider.of<AppAuthProvider>(context, listen: false).getCurrentUserRole();
-      if (updatedRole == 'owner') {
-        Navigator.pushNamedAndRemoveUntil(context, '/owner/dashboard', (route) => false);
+        await checkUserRoleAndNavigate();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
@@ -74,7 +108,11 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
         child: Column(
           children: [
             TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: passwordController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+            TextField(
+              controller: passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
             const SizedBox(height: 20),
             isLoading
                 ? const CircularProgressIndicator()

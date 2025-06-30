@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../ providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,44 +11,60 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _handleNavigation();
+    _navigateToRoleSelection();
   }
 
-  Future<void> _handleNavigation() async {
+  Future<void> _navigateToRoleSelection() async {
     await Future.delayed(const Duration(seconds: 2));
-
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    final isLoggedIn = await authProvider.checkIfLoggedIn();
-
-    if (isLoggedIn && authProvider.user != null) {
-      final role = await authProvider.getCurrentUserRole(); // ✅ Corrected here
-      if (role == 'user') {
-        Navigator.pushReplacementNamed(context, '/user/home');
-      } else if (role == 'owner') {
-        Navigator.pushReplacementNamed(context, '/owner/dashboard');
-      } else {
-        Navigator.pushReplacementNamed(context, '/select-role');
-      }
-    } else {
-      Navigator.pushReplacementNamed(context, '/select-role');
-    }
+    Navigator.pushReplacementNamed(context, '/select-role');
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/PlayArena splash screen logo.jpg', height: 200),
-            const SizedBox(height: 15),
-            const Text("Play Arena", style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text("Powered by Gateway Software Solutions", style: TextStyle(fontSize: 15)),
-            const SizedBox(height: 100),
-          ],
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // App Logo
+              Image.asset(
+                'assets/PlayArena splash screen logo.jpg',
+                height: 120,
+                errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.sports_soccer, size: 100, color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+
+              // App Name
+              const Text(
+                'PlayArena',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Loader
+              const CircularProgressIndicator(),
+
+              const SizedBox(height: 40),
+
+              // Footer
+              const Text(
+                'Powered by Gateway Software Solutions',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

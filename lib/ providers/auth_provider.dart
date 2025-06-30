@@ -90,16 +90,19 @@ class AppAuthProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
-        notifyListeners();
-        return 'user';
-      }
-
+      // ✅ Prioritize owners
       final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(user.uid).get();
+      print("Fetched owner doc: ${ownerDoc.data()}");
       if (ownerDoc.exists && ownerDoc.data()?['role'] == 'owner') {
         notifyListeners();
         return 'owner';
+      }
+
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      print("Fetched user doc: ${userDoc.data()}");
+      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
+        notifyListeners();
+        return 'user';
       }
 
       return null;
@@ -123,16 +126,17 @@ class AppAuthProvider extends ChangeNotifier {
     final user = userCred.user;
 
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
-        notifyListeners();
-        return 'user';
-      }
-
+      // ✅ Prioritize owners
       final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(user.uid).get();
       if (ownerDoc.exists && ownerDoc.data()?['role'] == 'owner') {
         notifyListeners();
         return 'owner';
+      }
+
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
+        notifyListeners();
+        return 'user';
       }
 
       return null;
@@ -145,14 +149,14 @@ class AppAuthProvider extends ChangeNotifier {
   Future<String?> getCurrentUserRole() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
-        return 'user';
-      }
-
       final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(user.uid).get();
       if (ownerDoc.exists && ownerDoc.data()?['role'] == 'owner') {
         return 'owner';
+      }
+
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (userDoc.exists && userDoc.data()?['role'] == 'user') {
+        return 'user';
       }
     }
     return null;
