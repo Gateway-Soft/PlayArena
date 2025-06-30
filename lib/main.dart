@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Providers
-
 import ' providers/auth_provider.dart';
 import ' providers/locale_provider.dart';
 import ' providers/owner_provider.dart';
@@ -15,7 +14,7 @@ import 'theme/theme_provider.dart';
 // Localization
 import 'l10n/app_localizations.dart';
 
-// Screens
+// Splash & Role
 import 'screens/splash_screen.dart';
 import 'screens/user_or_owner_selection_screen.dart';
 
@@ -32,8 +31,13 @@ import 'screens/owners/owner_login_screen.dart';
 import 'screens/owners/owner_signup_screen.dart';
 import 'screens/owners/owner_home_screen.dart';
 import 'screens/owners/owner_profile_screen.dart';
-import 'screens/owners/owner_settings_screen.dart' hide OwnerSettingsScreen;
+import 'screens/owners/owner_settings_screen.dart';
 import 'screens/owners/owner_dashboard_screen.dart';
+import 'screens/owners/add_turf_screen.dart';
+import 'screens/owners/edit_turf_screen.dart';
+import 'screens/owners/my_turf_list_screen.dart';
+import 'screens/owners/slot_management_screen.dart';
+import 'screens/owners/view_bookings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +46,7 @@ void main() async {
   // ✅ Load login state and role
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  final loggedRole = prefs.getString('loggedRole'); // 'user' or 'owner'
+  final loggedRole = prefs.getString('loggedRole');
 
   // ✅ Determine initial screen
   Widget initialScreen = const SplashScreen();
@@ -50,7 +54,7 @@ void main() async {
     if (loggedRole == 'user') {
       initialScreen = const UserHomeScreen();
     } else if (loggedRole == 'owner') {
-      initialScreen = const OwnerHomeScreen(); // ✅ Corrected
+      initialScreen = const OwnerHomeScreen();
     }
   }
 
@@ -91,11 +95,12 @@ class MyApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
 
-      // 🏁 Initial screen
+      // 🏁 Initial Screen
       home: initialScreen,
 
       // 🧭 Routes
       routes: {
+        // Splash and Role Select
         '/splash': (context) => const SplashScreen(),
         '/select-role': (context) => const UserOrOwnerSelectionScreen(),
 
@@ -110,10 +115,17 @@ class MyApp extends StatelessWidget {
         // Owner Routes
         '/owner/login': (context) => const OwnerLoginScreen(),
         '/owner/signup': (context) => const OwnerSignUpScreen(),
-        '/owner/home': (context) => const OwnerHomeScreen(), // ✅ Ensure this route is used
+        '/owner/home': (context) => const OwnerHomeScreen(),
         '/owner/profile': (context) => const OwnerProfileScreen(),
         '/owner/settings': (context) => const OwnerSettingsScreen(),
         '/owner/dashboard': (context) => const OwnerDashboardScreen(),
+
+        // 🆕 Extended Owner Routes
+        '/owner/add-turf': (context) => const AddTurfScreen(),
+        '/owner/my-turf-list': (context) => const MyTurfListScreen(),
+        // '/owner/edit-turf': (context) => EditTurfScreen(), // Navigated via push with arguments
+        '/owner/slot-management': (context) => const SlotManagementScreen(),
+        '/owner/view-bookings': (context) => const ViewBookingsScreen(),
       },
     );
   }

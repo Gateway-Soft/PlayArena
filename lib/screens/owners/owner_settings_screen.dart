@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OwnerSettingsScreen extends StatefulWidget {
   const OwnerSettingsScreen({Key? key}) : super(key: key);
@@ -10,16 +12,50 @@ class OwnerSettingsScreen extends StatefulWidget {
 
 class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
   bool isTurfOpen = true;
+  String ownerName = '';
+  String ownerEmail = '';
+  String turfName = 'PlayArena Turf'; // Default
 
-  // Example dummy owner details (replace with Firestore values)
-  final String ownerName = "Srigunaseelan";
-  final String ownerEmail = "srigunaseelan2004@gmail.com";
-  final String turfName = "PlayArena Turf";
+  final user = FirebaseAuth.instance.currentUser;
 
-  void _logout() async {
+  @override
+  void initState() {
+    super.initState();
+    loadOwnerData();
+  }
+
+  Future<void> loadOwnerData() async {
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance.collection('owners').doc(user!.uid).get();
+
+    if (doc.exists) {
+      setState(() {
+        ownerName = doc['name'] ?? '';
+        ownerEmail = doc['email'] ?? '';
+        turfName = doc['turfName'] ?? 'PlayArena Turf';
+        isTurfOpen = doc['isTurfOpen'] ?? true;
+      });
+    }
+  }
+
+  Future<void> updateTurfAvailability(bool value) async {
+    if (user == null) return;
+    await FirebaseFirestore.instance.collection('owners').doc(user!.uid).update({
+      'isTurfOpen': value,
+    });
+  }
+
+  Future<void> _logout() async {
+    // Sign out Firebase
     await FirebaseAuth.instance.signOut();
-    if (context.mounted) {
-      Navigator.pushReplacementNamed(context, "/login");
+
+    // Clear login state
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    // Navigate to role selection
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, "/select-role", (route) => false);
     }
   }
 
@@ -41,7 +77,8 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.teal[200],
-                child: Text(ownerName[0], style: const TextStyle(fontSize: 20, color: Colors.white)),
+                child: Text(ownerName.isNotEmpty ? ownerName[0] : '?',
+                    style: const TextStyle(fontSize: 20, color: Colors.white)),
               ),
               title: Text(ownerName),
               subtitle: Text(ownerEmail),
@@ -61,18 +98,18 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
 
           const SizedBox(height: 20),
 
-          // Availability Switch
+          // Turf Availability Switch
           SwitchListTile(
             title: const Text("Turf Availability"),
             subtitle: Text(isTurfOpen ? "Open for Bookings" : "Closed Temporarily"),
-            secondary: const Icon(Icons.toggle_on, color: Colors.green),
+            secondary: Icon(
+              isTurfOpen ? Icons.check_circle : Icons.cancel,
+              color: isTurfOpen ? Colors.green : Colors.red,
+            ),
             value: isTurfOpen,
             onChanged: (val) {
-              setState(() {
-                isTurfOpen = val;
-              });
-
-              // TODO: Update availability status in Firestore
+              setState(() => isTurfOpen = val);
+              updateTurfAvailability(val);
             },
           ),
 
@@ -83,7 +120,7 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
             leading: const Icon(Icons.edit, color: Colors.blue),
             title: const Text("Update Profile"),
             onTap: () {
-              // TODO: Navigate to edit profile screen
+              Navigator.pushNamed(context, '/owner/profile');
             },
           ),
 
@@ -94,7 +131,8 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
             leading: const Icon(Icons.lock, color: Colors.deepPurple),
             title: const Text("Change Password"),
             onTap: () {
-              // TODO: Navigate to password reset screen
+              // Optional: Implement password reset
+              Navigator.pushNamed(context, '/reset-password');
             },
           ),
 

@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OwnerDashboardScreen extends StatelessWidget {
   const OwnerDashboardScreen({Key? key}) : super(key: key);
 
+  void _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/select-role', (_) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // TODO: Fetch turf data from Firestore later
+    String turfName = "GreenField Turf";
+    String turfLocation = "Chennai, Tamil Nadu";
+    double rating = 4.5;
+    bool isAvailable = true;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Owner Dashboard"),
@@ -12,9 +26,7 @@ class OwnerDashboardScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Add logout logic
-            },
+            onPressed: () => _logout(context),
           )
         ],
       ),
@@ -32,13 +44,13 @@ class OwnerDashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset("assets/turf_sample.jpg", width: 60, height: 60, fit: BoxFit.cover),
                 ),
-                title: const Text("GreenField Turf"),
-                subtitle: const Text("Chennai, Tamil Nadu"),
+                title: Text(turfName),
+                subtitle: Text(turfLocation),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.star, color: Colors.amber),
-                    Text("4.5")
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber),
+                    Text(rating.toString())
                   ],
                 ),
               ),
@@ -68,14 +80,14 @@ class OwnerDashboardScreen extends StatelessWidget {
                 subtitle: const Text("₹ 42,500"),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // Navigate to Earnings details
+                  Navigator.pushNamed(context, '/owner/earnings');
                 },
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // Manage Turf
+            // Manage Turf Card
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -85,7 +97,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                     leading: const Icon(Icons.edit_location_alt, color: Colors.blue),
                     title: const Text("Edit Turf Details"),
                     onTap: () {
-                      // Navigate to edit screen
+                      Navigator.pushNamed(context, '/owner/edit-turf');
                     },
                   ),
                   const Divider(),
@@ -93,16 +105,25 @@ class OwnerDashboardScreen extends StatelessWidget {
                     leading: const Icon(Icons.calendar_today, color: Colors.orange),
                     title: const Text("Manage Availability"),
                     onTap: () {
-                      // Navigate to manage availability
+                      Navigator.pushNamed(context, '/owner/slots');
                     },
                   ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text("Turf Availability"),
+                    value: isAvailable,
+                    onChanged: (val) {
+                      // TODO: Firestore status update
+                    },
+                    secondary: const Icon(Icons.toggle_on, color: Colors.teal),
+                  )
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // Messages from users
+            // Messages from Users
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -112,8 +133,21 @@ class OwnerDashboardScreen extends StatelessWidget {
                 subtitle: const Text("3 New Messages"),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // Navigate to messages screen
+                  Navigator.pushNamed(context, '/owner/messages');
                 },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Add Turf
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/owner/add-turf'),
+              icon: const Icon(Icons.add_business),
+              label: const Text("Add New Turf"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
             ),
 
@@ -121,15 +155,13 @@ class OwnerDashboardScreen extends StatelessWidget {
 
             // Logout
             ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add logout logic
-              },
+              onPressed: () => _logout(context),
+              icon: const Icon(Icons.logout),
+              label: const Text("Logout"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
-              icon: const Icon(Icons.logout),
-              label: const Text("Logout"),
             ),
           ],
         ),

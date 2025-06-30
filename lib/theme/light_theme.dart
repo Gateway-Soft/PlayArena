@@ -4,11 +4,14 @@ class LightTheme {
   ThemeData buildTheme() {
     return ThemeData(
       brightness: Brightness.light,
-      primarySwatch: Colors.indigo,
+      primarySwatch: Colors.teal,
       scaffoldBackgroundColor: Colors.white,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
       ),
     );
   }

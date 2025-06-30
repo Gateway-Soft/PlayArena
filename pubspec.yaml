@@ -1,7 +1,7 @@
 name: playarena
-description: "A new Flutter project."
+description: "A new Flutter project for turf booking with user & owner roles."
 
-publish_to: 'none' # Prevent accidental publishing
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -12,43 +12,44 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # 🔤 Localization Support
+  # 🌐 Localization & Internationalization
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
 
-  # 🔥 Firebase Dependencies
+  # 🔥 Firebase Core Dependencies
   firebase_core: ^2.32.0
   firebase_auth: ^4.17.5
   cloud_firestore: ^4.17.5
   firebase_storage: ^11.6.6
 
-  # 📸 Image Picker
-  image_picker: ^1.0.7
-
-  # 🌐 URL Launcher
-  url_launcher: ^6.2.5
-
-  # 💾 Local Storage
-  shared_preferences: ^2.2.2
-
-  # 🔍 App Info
-  package_info_plus: ^8.3.0   # ✅ Resolved for web compatibility
-
   # 🔐 Google Sign-In
   google_sign_in: ^6.2.1
+
+  # 📸 Image Picker for profile photo
+  image_picker: ^1.0.7
+
+  # 💾 Shared Preferences for storing login state & role
+  shared_preferences: ^2.2.2
+
+  # ℹ️ App Info like name, version
+  package_info_plus: ^8.3.0
+
+  # 🌐 Launch URLs (like calling owner, website, WhatsApp)
+  url_launcher: ^6.2.5
 
   # 📦 State Management
   provider: ^6.1.2
 
-  # 🍎 iOS-style icons
+  # 🍎 iOS-style Icons
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
 flutter_icons:
   android: true
   ios: true
@@ -62,9 +63,4 @@ flutter:
   assets:
     - assets/
     - assets/PlayArena splash screen logo.jpg
-
-  # Optional font setup
-  # fonts:
-  #   - family: YourFont
-  #     fonts:
-  #       - asset: fonts/YourFont-Regular.ttf
+    - assets/default_user.png   # ✅ Default avatar for profiles
