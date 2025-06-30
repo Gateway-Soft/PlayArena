@@ -49,6 +49,8 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("PlayArena Owner"),
@@ -67,6 +69,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                     : const AssetImage('assets/default_user.png') as ImageProvider,
               ),
               decoration: BoxDecoration(color: Colors.teal[800]),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text("Home"),
+              onTap: () {
+                Navigator.pop(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.dashboard),
@@ -106,9 +115,11 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
             SwitchListTile(
               title: const Text("Dark Theme"),
               secondary: const Icon(Icons.dark_mode),
-              value: context.watch<ThemeProvider>().isDarkMode,
-              onChanged: (val) {
-                context.read<ThemeProvider>().toggleTheme(val);
+              value: themeProvider.isDarkMode,
+              onChanged: (val) async {
+                themeProvider.toggleTheme(val);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isDarkMode', val);
               },
             ),
             const Divider(),

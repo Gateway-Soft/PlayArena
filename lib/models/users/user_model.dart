@@ -24,7 +24,7 @@ class UserModel {
       email: data['email'] ?? '',
       photoUrl: data['photoUrl'] ?? '',
       role: data['role'] ?? 'user',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -34,7 +34,7 @@ class UserModel {
       'email': email,
       'photoUrl': photoUrl,
       'role': role,
-      'createdAt': createdAt,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }

@@ -24,7 +24,7 @@ class OwnerModel {
       email: data['email'] ?? '',
       photoUrl: data['photoUrl'] ?? '',
       role: data['role'] ?? 'owner',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -34,7 +34,7 @@ class OwnerModel {
       'email': email,
       'photoUrl': photoUrl,
       'role': role,
-      'createdAt': createdAt,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }

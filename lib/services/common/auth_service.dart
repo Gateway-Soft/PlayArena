@@ -1,13 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // ------------------ Email/Password Signup ------------------
   Future<User?> signUpWithEmail(String name, String email, String password, String role) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -20,7 +19,7 @@ class AuthService {
         'email': email,
         'role': role,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       return credential.user;
     } catch (e) {
@@ -29,7 +28,6 @@ class AuthService {
     }
   }
 
-  // ------------------ Email/Password Login ------------------
   Future<User?> loginWithEmail(String email, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
@@ -43,12 +41,10 @@ class AuthService {
     }
   }
 
-  // ------------------ Google Sign-In ------------------
   Future<User?> signInWithGoogle(String selectedRole) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) return null; // User canceled
+      if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
@@ -60,7 +56,6 @@ class AuthService {
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
 
-      // Save to Firestore if first-time login
       final docRef = _db.collection('users').doc(user!.uid);
       final doc = await docRef.get();
 
@@ -70,7 +65,7 @@ class AuthService {
           'email': user.email,
           'role': selectedRole,
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
 
       return user;
@@ -80,13 +75,11 @@ class AuthService {
     }
   }
 
-  // ------------------ Get Current User Role ------------------
   Future<String?> getUserRole(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.data()?['role'] as String?;
   }
 
-  // ------------------ Sign Out ------------------
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();

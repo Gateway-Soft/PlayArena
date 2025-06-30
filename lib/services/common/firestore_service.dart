@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 🔹 Save user data
   Future<void> saveUser({
     required String uid,
     required String name,
@@ -20,7 +19,6 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  // 🔹 Save owner data
   Future<void> saveOwner({
     required String uid,
     required String name,
@@ -37,17 +35,14 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  // 🔹 Get user document
   Future<DocumentSnapshot> getUser(String uid) async {
     return await _firestore.collection('users').doc(uid).get();
   }
 
-  // 🔹 Get owner document
   Future<DocumentSnapshot> getOwner(String uid) async {
     return await _firestore.collection('owners').doc(uid).get();
   }
 
-  // 🔹 Update profile fields
   Future<void> updateUserProfile(String uid, Map<String, dynamic> updates) async {
     await _firestore.collection('users').doc(uid).update(updates);
   }
@@ -56,7 +51,6 @@ class FirestoreService {
     await _firestore.collection('owners').doc(uid).update(updates);
   }
 
-  // 🔹 Fetch all turfs (for home screen listing)
   Stream<List<Map<String, dynamic>>> getAllTurfs() {
     return _firestore.collection('turfs').snapshots().map((snapshot) =>
         snapshot.docs.map((doc) => doc.data()).toList());

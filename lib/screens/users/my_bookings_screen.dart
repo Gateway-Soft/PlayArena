@@ -1,84 +1,43 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import '../../models/common/booking_model.dart';
-import '../../utils/date_time_helper.dart';
-import '../../widgets/common/loading_widget.dart';
 
-class UserBookingScreen extends StatefulWidget {
+class UserBookingScreen extends StatelessWidget {
   const UserBookingScreen({super.key});
 
   @override
-  State<UserBookingScreen> createState() => _UserBookingScreenState();
-}
-
-class _UserBookingScreenState extends State<UserBookingScreen> {
-  final String? userId = FirebaseAuth.instance.currentUser?.uid;
-
-  Stream<List<BookingModel>> getUserBookings() {
-    return FirebaseFirestore.instance
-        .collection('bookings')
-        .where('userId', isEqualTo: userId)
-        .orderBy('bookingDate', descending: true)
-        .snapshots()
-        .map((snapshot) =>
-        snapshot.docs.map((doc) => BookingModel.fromMap(doc.data(), doc.id)).toList());
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Bookings'),
-      ),
-      body: StreamBuilder<List<BookingModel>>(
-        stream: getUserBookings(),
+      appBar: AppBar(title: const Text("My Bookings")),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('bookings')
+            .where('userId', isEqualTo: currentUser?.uid)
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget();
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No bookings found.'));
+            return const Center(child: CircularProgressIndicator());
           }
 
-          final bookings = snapshot.data!;
+          final bookings = snapshot.data?.docs ?? [];
+
+          if (bookings.isEmpty) {
+            return const Center(child: Text("No bookings found."));
+          }
+
           return ListView.builder(
             itemCount: bookings.length,
             itemBuilder: (context, index) {
-              final booking = bookings[index];
+              final booking = bookings[index].data() as Map<String, dynamic>;
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                elevation: 2,
+                margin: const EdgeInsets.all(10),
                 child: ListTile(
-                  leading: const Icon(Icons.sports_soccer, color: Colors.indigo),
-                  title: Text(
-                    booking.turfName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text(
-                        DateTimeHelper.formatDateTimeRange(
-                          booking.startTime,
-                          booking.endTime,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text("Status: ${booking.status}"),
-                    ],
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Paid', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(
-                        '₹${booking.amountPaid.toStringAsFixed(0)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ],
-                  ),
+                  leading: const Icon(Icons.calendar_today),
+                  title: Text(booking['turf']),
+                  subtitle: Text("${booking['date']} | ${booking['time']}"),
                 ),
               );
             },

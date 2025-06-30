@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../../models/common/booking_model.dart';
 import '../../utils/date_time_helper.dart';
-
-
 
 class OwnerBookingCard extends StatelessWidget {
   final BookingModel booking;
@@ -25,9 +22,11 @@ class OwnerBookingCard extends StatelessWidget {
           DateTimeHelper.formatDateTimeRange(booking.startTime, booking.endTime),
           style: const TextStyle(color: Colors.grey),
         ),
-
         isThreeLine: true,
-        trailing: const Icon(Icons.check_circle, color: Colors.green),
+        trailing: Icon(
+          booking.status == 'confirmed' ? Icons.check_circle : Icons.hourglass_bottom,
+          color: booking.status == 'confirmed' ? Colors.green : Colors.orange,
+        ),
       ),
     );
   }

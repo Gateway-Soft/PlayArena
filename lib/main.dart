@@ -65,7 +65,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => OwnerProvider()),
+        ChangeNotifierProvider(create: (_) =>  OwnerProvider()),
       ],
       child: MyApp(initialScreen: initialScreen),
     ),

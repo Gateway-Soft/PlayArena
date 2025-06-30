@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TurfModel {
   final String id;
   final String name;
@@ -5,6 +7,7 @@ class TurfModel {
   final String imageUrl;
   final double pricePerHour;
   final String ownerId;
+  final DateTime createdAt;
 
   TurfModel({
     required this.id,
@@ -13,6 +16,7 @@ class TurfModel {
     required this.imageUrl,
     required this.pricePerHour,
     required this.ownerId,
+    required this.createdAt,
   });
 
   factory TurfModel.fromMap(Map<String, dynamic> data, String id) {
@@ -23,6 +27,7 @@ class TurfModel {
       imageUrl: data['imageUrl'] ?? '',
       pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
       ownerId: data['ownerId'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -33,6 +38,7 @@ class TurfModel {
       'imageUrl': imageUrl,
       'pricePerHour': pricePerHour,
       'ownerId': ownerId,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }
