@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../ providers/auth_provider.dart';
@@ -19,12 +21,12 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final user = FirebaseAuth.instance.currentUser;
   final nameController = TextEditingController();
-  bool isLoading = false;
 
   String name = '';
   String email = '';
   String photoUrl = '';
   File? newProfileImage;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -34,7 +36,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> loadUserProfile() async {
     if (user == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    final doc =
+    await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
     final data = doc.data();
     if (data != null) {
       setState(() {
@@ -46,17 +49,61 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  Future<void> requestPermission() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.photos.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Gallery permission denied.")),
+        );
+        return;
+      }
+    }
+  }
+
   Future<void> pickProfileImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => newProfileImage = File(picked.path));
+    try {
+      await requestPermission();
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+
+      if (picked != null) {
+        final cropped = await ImageCropper().cropImage(
+          sourcePath: picked.path,
+          compressFormat: ImageCompressFormat.jpg,
+          compressQuality: 85,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop Image',
+              toolbarColor: Colors.teal,
+              toolbarWidgetColor: Colors.white,
+              hideBottomControls: false,
+              lockAspectRatio: false,
+            ),
+            IOSUiSettings(
+              title: 'Crop Image',
+            ),
+          ],
+        );
+
+        if (cropped != null && File(cropped.path).existsSync()) {
+          setState(() => newProfileImage = File(cropped.path));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Image cropping cancelled")),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Image pick error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error picking image")),
+      );
     }
   }
 
   Future<void> updateProfile() async {
-    if (user == null) return;
-
-    if (nameController.text.trim().isEmpty) {
+    if (user == null || nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Name cannot be empty")),
       );
@@ -67,26 +114,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     String uploadedUrl = photoUrl;
 
-    if (newProfileImage != null) {
-      final ref = FirebaseStorage.instance.ref().child('profile_photos/${user!.uid}.jpg');
-      await ref.putFile(newProfileImage!);
-      uploadedUrl = await ref.getDownloadURL();
+    try {
+      if (newProfileImage != null) {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('profile_photos/${user!.uid}.jpg');
+        await ref.putFile(newProfileImage!);
+        uploadedUrl = await ref.getDownloadURL();
+      }
+
+      await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
+        'name': nameController.text.trim(),
+        'photoUrl': uploadedUrl,
+      });
+
+      setState(() {
+        photoUrl = uploadedUrl;
+        name = nameController.text.trim();
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile updated successfully")),
+      );
+    } catch (e) {
+      debugPrint("Upload error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update profile")),
+      );
+      setState(() => isLoading = false);
     }
-
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
-      'name': nameController.text.trim(),
-      'photoUrl': uploadedUrl,
-    });
-
-    setState(() {
-      photoUrl = uploadedUrl;
-      name = nameController.text.trim();
-      isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile updated successfully")),
-    );
   }
 
   Future<void> logout() async {
@@ -114,7 +171,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ? FileImage(newProfileImage!)
                         : (photoUrl.isNotEmpty
                         ? NetworkImage(photoUrl)
-                        : const AssetImage('assets/default_user.png') as ImageProvider),
+                        : const AssetImage('assets/default_user.png')
+                    as ImageProvider),
                   ),
                   GestureDetector(
                     onTap: pickProfileImage,
@@ -154,7 +212,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.logout),
               label: const Text("Logout"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
               onPressed: logout,
             ),
           ],
