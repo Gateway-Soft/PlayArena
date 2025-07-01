@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:playarena/screens/about_app_screen.dart';
+import 'package:playarena/screens/forgot_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,20 +45,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // ✅ Load login state and role
   final prefs = await SharedPreferences.getInstance();
-  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  final loggedRole = prefs.getString('loggedRole');
+  final role = prefs.getString('user_role'); // ✅ Updated key
 
-  // ✅ Determine initial screen
+  // ✅ Firebase auth is the reliable way to check login status
   Widget initialScreen = const SplashScreen();
-  if (isLoggedIn) {
-    if (loggedRole == 'user') {
-      initialScreen = const UserHomeScreen();
-    } else if (loggedRole == 'owner') {
-      initialScreen = const OwnerHomeScreen();
-    }
-  }
 
   runApp(
     MultiProvider(
@@ -65,7 +58,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) =>  OwnerProvider()),
+        ChangeNotifierProvider(create: (_) => OwnerProvider()),
       ],
       child: MyApp(initialScreen: initialScreen),
     ),
@@ -102,10 +95,13 @@ class MyApp extends StatelessWidget {
       routes: {
         // Splash and Role Select
         '/splash': (context) => const SplashScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/select-role': (context) => const UserOrOwnerSelectionScreen(),
+        '/about': (context) => const AboutAppScreen(),
 
         // User Routes
         '/user/login': (context) => const UserLoginScreen(),
+        '/login': (context) => const UserLoginScreen(),
         '/user/signup': (context) => const UserSignUpScreen(),
         '/user/home': (context) => const UserHomeScreen(),
         '/user/profile': (context) => const UserProfileScreen(),
@@ -120,10 +116,9 @@ class MyApp extends StatelessWidget {
         '/owner/settings': (context) => const OwnerSettingsScreen(),
         '/owner/dashboard': (context) => const OwnerDashboardScreen(),
 
-        // 🆕 Extended Owner Routes
+        // Extended Owner Routes
         '/owner/add-turf': (context) => const AddTurfScreen(),
         '/owner/my-turf-list': (context) => const MyTurfListScreen(),
-        // '/owner/edit-turf': (context) => EditTurfScreen(), // Navigated via push with arguments
         '/owner/slot-management': (context) => const SlotManagementScreen(),
         '/owner/view-bookings': (context) => const ViewBookingsScreen(),
       },

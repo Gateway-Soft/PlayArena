@@ -70,6 +70,11 @@ class CustomDrawer extends StatelessWidget {
                 value: themeProvider.currentTheme == ThemeMode.dark,
                 onChanged: (val) => themeProvider.toggleTheme(val),
               ),
+              ListTile(
+                leading: Icon(Icons.info_outline),
+                title: Text("About App"),
+                onTap: () => Navigator.pushNamed(context, '/about'),
+              ),
 
               // 🔓 Logout
               ListTile(

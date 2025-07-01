@@ -6,7 +6,7 @@ class UserOrOwnerSelectionScreen extends StatelessWidget {
 
   Future<void> _setRoleAndNavigate(BuildContext context, String role, String route) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('loggedRole', role); // ✅ Save selected role
+    await prefs.setString('user_role', role); // ✅ KEY MATCHES SPLASH SCREEN
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Selected role: $role')),

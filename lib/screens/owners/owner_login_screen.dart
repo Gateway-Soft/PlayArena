@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../ providers/auth_provider.dart';
 
@@ -17,11 +18,11 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
   final passwordController = TextEditingController();
   bool isLoading = false;
 
-  // 🔁 Role Check Navigator
   Future<void> checkUserRoleAndNavigate() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final ownerDoc = await FirebaseFirestore.instance.collection('owners').doc(uid).get();
+    final prefs = await SharedPreferences.getInstance();
 
     if (userDoc.exists && ownerDoc.exists) {
       showDialog(
@@ -31,16 +32,18 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
           content: const Text('This account is registered as both User and Owner.'),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await prefs.setString('user_role', 'user');
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/user/home'); // ✅ User Home
+                Navigator.pushReplacementNamed(context, '/user/home');
               },
               child: const Text('User'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await prefs.setString('user_role', 'owner');
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/owner/home'); // ✅ Owner Home
+                Navigator.pushReplacementNamed(context, '/owner/home');
               },
               child: const Text('Owner'),
             ),
@@ -48,9 +51,11 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
         ),
       );
     } else if (ownerDoc.exists) {
-      Navigator.pushReplacementNamed(context, '/owner/home'); // ✅ Owner Home
+      await prefs.setString('user_role', 'owner');
+      Navigator.pushReplacementNamed(context, '/owner/home');
     } else if (userDoc.exists) {
-      Navigator.pushReplacementNamed(context, '/user/home'); // ✅ User Home
+      await prefs.setString('user_role', 'user');
+      Navigator.pushReplacementNamed(context, '/user/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Access Denied: No role assigned')),

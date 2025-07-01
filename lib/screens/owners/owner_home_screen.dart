@@ -122,6 +122,11 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                 await prefs.setBool('isDarkMode', val);
               },
             ),
+            ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text("About App"),
+              onTap: () => Navigator.pushNamed(context, '/about'),
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -159,6 +164,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                       Navigator.pushNamed(context, '/owner/bookings');
                     },
                   ),
+
                   _OwnerActionCard(
                     icon: Icons.attach_money,
                     title: 'Earnings',
