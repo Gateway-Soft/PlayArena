@@ -10,7 +10,6 @@ import 'package:provider/provider.dart';
 
 import '../../ providers/auth_provider.dart';
 
-
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
 
@@ -51,13 +50,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> requestPermission() async {
     if (Platform.isAndroid) {
-      final status = await Permission.photos.request();
-      if (!status.isGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Gallery permission denied.")),
-        );
-        return;
-      }
+      await Permission.storage.request();
+      await Permission.photos.request();
+    } else if (Platform.isIOS) {
+      await Permission.photos.request();
+      await Permission.mediaLibrary.request();
     }
   }
 
@@ -80,14 +77,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               hideBottomControls: false,
               lockAspectRatio: false,
             ),
-            IOSUiSettings(
-              title: 'Crop Image',
-            ),
+            IOSUiSettings(title: 'Crop Image'),
           ],
         );
 
-        if (cropped != null && File(cropped.path).existsSync()) {
-          setState(() => newProfileImage = File(cropped.path));
+        if (cropped != null) {
+          final file = File(cropped.path);
+          if (await file.exists()) {
+            setState(() => newProfileImage = file);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Selected image not found.")),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Image cropping cancelled")),
@@ -97,7 +99,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } catch (e) {
       debugPrint("Image pick error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error picking image")),
+        SnackBar(content: Text("Error picking image: $e")),
       );
     }
   }
@@ -111,7 +113,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
 
     setState(() => isLoading = true);
-
     String uploadedUrl = photoUrl;
 
     try {

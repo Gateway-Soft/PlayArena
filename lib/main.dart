@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:playarena/screens/about_app_screen.dart';
-import 'package:playarena/screens/forgot_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Providers
+// 🔐 Providers
+
+
+// 🎨 Theme
 import ' providers/auth_provider.dart';
 import ' providers/locale_provider.dart';
 import ' providers/owner_provider.dart';
@@ -13,14 +14,16 @@ import ' providers/user_provider.dart';
 import 'theme/theme_config.dart';
 import 'theme/theme_provider.dart';
 
-// Localization
+// 🌐 Localization
 import 'l10n/app_localizations.dart';
 
-// Splash & Role
+// 🔰 Core Screens
 import 'screens/splash_screen.dart';
 import 'screens/user_or_owner_selection_screen.dart';
+import 'screens/about_app_screen.dart';
+import 'screens/forgot_password_screen.dart';
 
-// User Screens
+// 👤 User Screens
 import 'screens/users/user_login_screen.dart';
 import 'screens/users/user_signup_screen.dart';
 import 'screens/users/user_home_screen.dart';
@@ -28,7 +31,7 @@ import 'screens/users/user_profile_screen.dart';
 import 'screens/users/user_settings_screen.dart';
 import 'screens/users/my_bookings_screen.dart';
 
-// Owner Screens
+// 🧑‍💼 Owner Screens
 import 'screens/owners/owner_login_screen.dart';
 import 'screens/owners/owner_signup_screen.dart';
 import 'screens/owners/owner_home_screen.dart';
@@ -46,10 +49,7 @@ void main() async {
   await Firebase.initializeApp();
 
   final prefs = await SharedPreferences.getInstance();
-  final role = prefs.getString('user_role'); // ✅ Updated key
-
-  // ✅ Firebase auth is the reliable way to check login status
-  Widget initialScreen = const SplashScreen();
+  final role = prefs.getString('user_role'); // For future role-based routing
 
   runApp(
     MultiProvider(
@@ -60,14 +60,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => OwnerProvider()),
       ],
-      child: MyApp(initialScreen: initialScreen),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final Widget initialScreen;
-  const MyApp({super.key, required this.initialScreen});
+  final Widget? initialScreen;
+  const MyApp({super.key, this.initialScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +78,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'PlayArena',
 
-      // 🌙 Theme Config
+      // 🎨 Themes
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.currentTheme,
@@ -88,18 +88,18 @@ class MyApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
 
-      // 🏁 Initial Screen
-      home: initialScreen,
+      // 🏁 Entry screen
+      home: initialScreen ?? const SplashScreen(),
 
       // 🧭 Routes
       routes: {
-        // Splash and Role Select
+        // 🌐 Core
         '/splash': (context) => const SplashScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/select-role': (context) => const UserOrOwnerSelectionScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/about': (context) => const AboutAppScreen(),
 
-        // User Routes
+        // 👤 User
         '/user/login': (context) => const UserLoginScreen(),
         '/login': (context) => const UserLoginScreen(),
         '/user/signup': (context) => const UserSignUpScreen(),
@@ -108,16 +108,15 @@ class MyApp extends StatelessWidget {
         '/user/settings': (context) => const UserSettingsScreen(),
         '/user/bookings': (context) => const UserBookingScreen(),
 
-        // Owner Routes
+        // 🧑‍💼 Owner
         '/owner/login': (context) => const OwnerLoginScreen(),
         '/owner/signup': (context) => const OwnerSignUpScreen(),
         '/owner/home': (context) => const OwnerHomeScreen(),
         '/owner/profile': (context) => const OwnerProfileScreen(),
         '/owner/settings': (context) => const OwnerSettingsScreen(),
         '/owner/dashboard': (context) => const OwnerDashboardScreen(),
-
-        // Extended Owner Routes
         '/owner/add-turf': (context) => const AddTurfScreen(),
+        '/owner/edit-turf': (context) => const EditTurfScreen(turfId: ''),
         '/owner/my-turf-list': (context) => const MyTurfListScreen(),
         '/owner/slot-management': (context) => const SlotManagementScreen(),
         '/owner/view-bookings': (context) => const ViewBookingsScreen(),
