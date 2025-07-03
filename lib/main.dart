@@ -3,9 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// 🔐 Providers
-
-
 // 🎨 Theme
 import ' providers/auth_provider.dart';
 import ' providers/locale_provider.dart';
