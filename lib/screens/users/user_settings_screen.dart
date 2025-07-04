@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../ providers/auth_provider.dart';
 import '../../ providers/locale_provider.dart';
 import '../../theme/theme_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -33,16 +34,22 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final localeProvider = Provider.of<LocaleProvider>(context);
+    final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
+      appBar: AppBar(
+        title: Text(loc.settings),
+      ),
       body: ListView(
         children: [
-          const ListTile(
-            title: Text("General Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+          ListTile(
+            title: Text(
+              loc.settings,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           SwitchListTile(
-            title: const Text("Enable Notifications"),
+            title: Text(loc.enableNotifications),
             value: _notificationsEnabled,
             onChanged: (value) {
               setState(() => _notificationsEnabled = value);
@@ -50,7 +57,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.language),
-            title: const Text("Change Language"),
+            title: Text(loc.changeLanguage),
             trailing: DropdownButton<Locale>(
               value: localeProvider.locale,
               onChanged: (Locale? newLocale) {
@@ -68,12 +75,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text("App Version"),
+            title: Text(loc.appVersion),
             subtitle: Text(_appVersion),
           ),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
+            title: Text(loc.logout),
             onTap: () {
               Provider.of<AppAuthProvider>(context, listen: false).signOut();
               Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);

@@ -13,7 +13,6 @@ class OwnerDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Fetch turf data from Firestore later
     String turfName = "GreenField Turf";
     String turfLocation = "Chennai, Tamil Nadu";
     double rating = 4.5;
@@ -34,8 +33,6 @@ class OwnerDashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-
-            // Turf Overview Card
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               elevation: 4,
@@ -55,10 +52,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Booking Overview
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -67,10 +61,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 _DashboardStat(title: "Completed", value: "106"),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // Earnings Card
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -79,15 +70,10 @@ class OwnerDashboardScreen extends StatelessWidget {
                 title: const Text("Total Earnings"),
                 subtitle: const Text("₹ 42,500"),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.pushNamed(context, '/owner/earnings');
-                },
+                onTap: () => Navigator.pushNamed(context, '/owner/earnings'),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Manage Turf Card
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -96,34 +82,25 @@ class OwnerDashboardScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.edit_location_alt, color: Colors.blue),
                     title: const Text("Edit Turf Details"),
-                    onTap: () {
-                      Navigator.pushNamed(context, '/owner/edit-turf');
-                    },
+                    onTap: () => Navigator.pushNamed(context, '/owner/edit-turf'),
                   ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.calendar_today, color: Colors.orange),
                     title: const Text("Manage Availability"),
-                    onTap: () {
-                      Navigator.pushNamed(context, '/owner/slots');
-                    },
+                    onTap: () => Navigator.pushNamed(context, '/owner/slots'),
                   ),
                   const Divider(),
                   SwitchListTile(
                     title: const Text("Turf Availability"),
                     value: isAvailable,
-                    onChanged: (val) {
-                      // TODO: Firestore status update
-                    },
+                    onChanged: (val) {},
                     secondary: const Icon(Icons.toggle_on, color: Colors.teal),
                   )
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Messages from Users
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -132,15 +109,10 @@ class OwnerDashboardScreen extends StatelessWidget {
                 title: const Text("User Messages"),
                 subtitle: const Text("3 New Messages"),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.pushNamed(context, '/owner/messages');
-                },
+                onTap: () => Navigator.pushNamed(context, '/owner/messages'),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Add Turf
             ElevatedButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/owner/add-turf'),
               icon: const Icon(Icons.add_business),
@@ -150,10 +122,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
             ),
-
             const SizedBox(height: 30),
-
-            // Logout
             ElevatedButton.icon(
               onPressed: () => _logout(context),
               icon: const Icon(Icons.logout),
@@ -170,11 +139,9 @@ class OwnerDashboardScreen extends StatelessWidget {
   }
 }
 
-// -------------------- Helper Widget --------------------
 class _DashboardStat extends StatelessWidget {
   final String title;
   final String value;
-
   const _DashboardStat({required this.title, required this.value});
 
   @override

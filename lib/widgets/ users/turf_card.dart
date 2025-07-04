@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../screens/users/turf_detail_screen.dart';
 
 class TurfCard extends StatelessWidget {
   final Map<String, dynamic> turfData;
+  final String turfId;
 
-  const TurfCard({super.key, required this.turfData});
+  const TurfCard({super.key, required this.turfData, required this.turfId});
 
   @override
   Widget build(BuildContext context) {
@@ -13,18 +15,22 @@ class TurfCard extends StatelessWidget {
 
     return Card(
       elevation: 4,
-      shadowColor: Colors.black26,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$name tapped")),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TurfDetailScreen(
+                turfId: turfId,
+                turfData: turfData,
+              ),
+            ),
           );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🖼 Turf Image
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
@@ -32,15 +38,14 @@ class TurfCard extends StatelessWidget {
                     ? Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
+                  errorBuilder: (_, __, ___) =>
                       Image.asset('assets/turf_sample.jpg', fit: BoxFit.cover),
                 )
                     : Image.asset('assets/turf_sample.jpg', fit: BoxFit.cover),
               ),
             ),
-            // 📄 Turf Name & Location
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

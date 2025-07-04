@@ -68,6 +68,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/lang/
     - assets/
     - assets/PlayArena splash screen logo.jpg
     - assets/default_user.png

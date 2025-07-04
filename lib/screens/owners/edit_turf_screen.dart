@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class EditTurfScreen extends StatefulWidget {
-  final String turfId; // Required to identify which turf to edit
-
+  final String turfId;
   const EditTurfScreen({super.key, required this.turfId});
 
   @override
@@ -48,7 +46,10 @@ class _EditTurfScreenState extends State<EditTurfScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      await FirebaseFirestore.instance.collection('turfs').doc(widget.turfId).update({
+      await FirebaseFirestore.instance
+          .collection('turfs')
+          .doc(widget.turfId)
+          .update({
         'name': nameController.text.trim(),
         'location': locationController.text.trim(),
       });

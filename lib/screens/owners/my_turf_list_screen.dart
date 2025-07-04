@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'edit_turf_screen.dart';
 import 'add_turf_screen.dart';
 
@@ -21,13 +21,11 @@ class _MyTurfListScreenState extends State<MyTurfListScreen> {
         .snapshots();
   }
 
-  void _navigateToEdit(String turfId, String name, String location) {
+  void _navigateToEdit(String turfId) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditTurfScreen(
-          turfId: turfId,
-        ),
+        builder: (context) => EditTurfScreen(turfId: turfId),
       ),
     );
   }
@@ -87,7 +85,7 @@ class _MyTurfListScreenState extends State<MyTurfListScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _navigateToEdit(turfId, name, location),
+                        onPressed: () => _navigateToEdit(turfId),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),

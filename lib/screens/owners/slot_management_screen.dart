@@ -94,7 +94,6 @@ class _SlotManagementScreenState extends State<SlotManagementScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-
                 if (selectedTurfId != null) ...[
                   TextField(
                     controller: slotController,

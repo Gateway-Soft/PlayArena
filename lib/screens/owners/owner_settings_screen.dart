@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OwnerSettingsScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
   bool isTurfOpen = true;
   String ownerName = '';
   String ownerEmail = '';
-  String turfName = 'PlayArena Turf'; // Default
+  String turfName = 'PlayArena Turf';
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -46,14 +46,9 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
   }
 
   Future<void> _logout() async {
-    // Sign out Firebase
     await FirebaseAuth.instance.signOut();
-
-    // Clear login state
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-
-    // Navigate to role selection
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(context, "/select-role", (route) => false);
     }
@@ -69,8 +64,6 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-
-          // Owner Info
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -84,10 +77,7 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
               subtitle: Text(ownerEmail),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Turf Name
           Card(
             child: ListTile(
               leading: const Icon(Icons.sports_soccer, color: Colors.orange),
@@ -95,10 +85,7 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
               subtitle: Text(turfName),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Turf Availability Switch
           SwitchListTile(
             title: const Text("Turf Availability"),
             subtitle: Text(isTurfOpen ? "Open for Bookings" : "Closed Temporarily"),
@@ -112,39 +99,24 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
               updateTurfAvailability(val);
             },
           ),
-
           const SizedBox(height: 20),
-
-          // Update Profile
           ListTile(
             leading: const Icon(Icons.edit, color: Colors.blue),
             title: const Text("Update Profile"),
-            onTap: () {
-              Navigator.pushNamed(context, '/owner/profile');
-            },
+            onTap: () => Navigator.pushNamed(context, '/owner/profile'),
           ),
-
           const Divider(),
-
-          // Change Password
           ListTile(
             leading: const Icon(Icons.lock, color: Colors.deepPurple),
             title: const Text("Change Password"),
-            onTap: () {
-              // Optional: Implement password reset
-              Navigator.pushNamed(context, '/reset-password');
-            },
+            onTap: () => Navigator.pushNamed(context, '/reset-password'),
           ),
-
           const Divider(),
-
-          // Logout
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text("Logout"),
             onTap: _logout,
           ),
-
           const SizedBox(height: 30),
         ],
       ),
