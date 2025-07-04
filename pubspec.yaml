@@ -71,4 +71,5 @@ flutter:
     - assets/lang/
     - assets/
     - assets/PlayArena splash screen logo.jpg
-    - assets/default_user.png
+    - assets/user_placeholder.png
+    - assets/images/user_placeholder.png   # ✅ Added placeholder for profile pic

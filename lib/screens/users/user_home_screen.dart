@@ -3,8 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+
 import '../../widgets/ users/turf_card.dart';
-import '../../widgets/common/custom_drawer.dart';
+import '../../widgets/ users/user_custom_drawer.dart';
+import '../../theme/theme_provider.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -75,30 +79,87 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     }
   }
 
+  Future<void> _enterManualLocation() async {
+    final controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Enter Your Location"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'E.g. Karaikudi'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser?.uid;
+              if (uid != null) {
+                await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                  'location': controller.text,
+                });
+              }
+              setState(() {
+                currentLocation = controller.text;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.gps_fixed),
+            title: const Text('Detect Automatically'),
+            onTap: () {
+              Navigator.pop(context);
+              _detectLocation();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_location_alt),
+            title: const Text('Enter Manually'),
+            onTap: () {
+              Navigator.pop(context);
+              _enterManualLocation();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("PlayArena")),
+      appBar: AppBar(
+        title: const Text("PlayArena"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.location_on, color: Colors.white),
+            tooltip: 'Update Location',
+            onPressed: _showLocationOptions,
+          ),
+        ],
+      ),
       drawer: CustomDrawer(userName: userName, userEmail: userEmail, userPhotoUrl: photoUrl),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔍 Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Nearby Turfs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                IconButton(icon: const Icon(Icons.location_on), onPressed: _detectLocation),
-              ],
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(currentLocation, style: const TextStyle(color: Colors.grey)),
-            ),
+            Text("Welcome, $userName 👋", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text("\u{1F4CD} $currentLocation", style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 12),
-
-            // 🔍 Search Bar
             TextField(
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
@@ -108,8 +169,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               onChanged: (val) => setState(() => searchQuery = val.toLowerCase()),
             ),
             const SizedBox(height: 12),
-
-            // 🏷 Category Chips
             SizedBox(
               height: 40,
               child: ListView(
@@ -129,8 +188,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // 📍 Turf Grid View
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance.collection('turfs').snapshots(),

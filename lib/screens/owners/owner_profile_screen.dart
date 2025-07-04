@@ -4,10 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 
 import '../../ providers/auth_provider.dart';
-
 
 class OwnerProfileScreen extends StatefulWidget {
   const OwnerProfileScreen({super.key});
@@ -19,8 +20,9 @@ class OwnerProfileScreen extends StatefulWidget {
 class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
   final owner = FirebaseAuth.instance.currentUser;
   final nameController = TextEditingController();
-  bool isLoading = false;
+  final locationController = TextEditingController();
 
+  bool isLoading = false;
   String name = '';
   String email = '';
   String photoUrl = '';
@@ -34,7 +36,8 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
 
   Future<void> loadOwnerProfile() async {
     if (owner == null) return;
-    final doc = await FirebaseFirestore.instance.collection('owners').doc(owner!.uid).get();
+    final doc =
+    await FirebaseFirestore.instance.collection('owners').doc(owner!.uid).get();
     final data = doc.data();
     if (data != null) {
       setState(() {
@@ -42,7 +45,57 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
         email = data['email'] ?? '';
         photoUrl = data['photoUrl'] ?? '';
         nameController.text = name;
+        locationController.text = data['location'] ?? '';
       });
+    }
+  }
+
+  Future<void> fetchCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location services are disabled.")),
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location permission denied")),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location permission permanently denied")),
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks =
+      await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        String address =
+            "${place.name}, ${place.locality}, ${place.administrativeArea}";
+        setState(() {
+          locationController.text = address;
+        });
+      }
+    } catch (e) {
+      debugPrint("Location Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch location: $e")),
+      );
     }
   }
 
@@ -68,7 +121,8 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
     String uploadedUrl = photoUrl;
 
     if (newProfileImage != null) {
-      final ref = FirebaseStorage.instance.ref().child('owner_profile_photos/${owner!.uid}.jpg');
+      final ref =
+      FirebaseStorage.instance.ref().child('owner_profile_photos/${owner!.uid}.jpg');
       await ref.putFile(newProfileImage!);
       uploadedUrl = await ref.getDownloadURL();
     }
@@ -76,6 +130,7 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
     await FirebaseFirestore.instance.collection('owners').doc(owner!.uid).update({
       'name': nameController.text.trim(),
       'photoUrl': uploadedUrl,
+      'location': locationController.text.trim(),
     });
 
     setState(() {
@@ -114,7 +169,8 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                         ? FileImage(newProfileImage!)
                         : (photoUrl.isNotEmpty
                         ? NetworkImage(photoUrl)
-                        : const AssetImage('assets/default_user.png') as ImageProvider),
+                        : const AssetImage('assets/user_placeholder.png')
+                    as ImageProvider),
                   ),
                   GestureDetector(
                     onTap: pickProfileImage,
@@ -141,6 +197,18 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                 suffixIcon: Tooltip(
                   message: 'Email can’t be edited',
                   child: Icon(Icons.lock),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: locationController,
+              decoration: InputDecoration(
+                labelText: 'Turf Location',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.location_on, color: Colors.red),
+                  tooltip: 'Fetch current location',
+                  onPressed: fetchCurrentLocation,
                 ),
               ),
             ),

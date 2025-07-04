@@ -4,11 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../ providers/auth_provider.dart';
+
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -20,6 +22,7 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final user = FirebaseAuth.instance.currentUser;
   final nameController = TextEditingController();
+  final locationController = TextEditingController();
 
   String name = '';
   String email = '';
@@ -35,8 +38,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> loadUserProfile() async {
     if (user == null) return;
-    final doc =
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
     final data = doc.data();
     if (data != null) {
       setState(() {
@@ -44,62 +46,79 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         email = data['email'] ?? '';
         photoUrl = data['photoUrl'] ?? '';
         nameController.text = name;
+        locationController.text = data['location'] ?? '';
       });
     }
   }
 
   Future<void> requestPermission() async {
-    if (Platform.isAndroid) {
-      await Permission.storage.request();
-      await Permission.photos.request();
-    } else if (Platform.isIOS) {
-      await Permission.photos.request();
-      await Permission.mediaLibrary.request();
-    }
+    await [
+      Permission.photos,
+      Permission.mediaLibrary,
+      Permission.storage,
+    ].request();
   }
 
   Future<void> pickProfileImage() async {
     try {
       await requestPermission();
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery);
-
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (picked != null) {
-        final cropped = await ImageCropper().cropImage(
-          sourcePath: picked.path,
-          compressFormat: ImageCompressFormat.jpg,
-          compressQuality: 85,
-          uiSettings: [
-            AndroidUiSettings(
-              toolbarTitle: 'Crop Image',
-              toolbarColor: Colors.teal,
-              toolbarWidgetColor: Colors.white,
-              hideBottomControls: false,
-              lockAspectRatio: false,
-            ),
-            IOSUiSettings(title: 'Crop Image'),
-          ],
-        );
-
-        if (cropped != null) {
-          final file = File(cropped.path);
-          if (await file.exists()) {
-            setState(() => newProfileImage = file);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Selected image not found.")),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Image cropping cancelled")),
-          );
-        }
+        setState(() => newProfileImage = File(picked.path));
       }
     } catch (e) {
       debugPrint("Image pick error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error picking image: $e")),
+      );
+    }
+  }
+
+  Future<void> fetchCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location services are disabled.")),
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location permission denied")),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location permission permanently denied")),
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks =
+      await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        String address =
+            "${place.name}, ${place.locality}, ${place.administrativeArea}";
+        setState(() {
+          locationController.text = address;
+        });
+      }
+    } catch (e) {
+      debugPrint("Location Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch location: $e")),
       );
     }
   }
@@ -117,9 +136,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     try {
       if (newProfileImage != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('profile_photos/${user!.uid}.jpg');
+        final ref =
+        FirebaseStorage.instance.ref().child('profile_photos/${user!.uid}.jpg');
         await ref.putFile(newProfileImage!);
         uploadedUrl = await ref.getDownloadURL();
       }
@@ -127,6 +145,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
         'name': nameController.text.trim(),
         'photoUrl': uploadedUrl,
+        'location': locationController.text.trim(),
       });
 
       setState(() {
@@ -172,7 +191,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ? FileImage(newProfileImage!)
                         : (photoUrl.isNotEmpty
                         ? NetworkImage(photoUrl)
-                        : const AssetImage('assets/default_user.png')
+                        : const AssetImage('assets/user_placeholder.png')
                     as ImageProvider),
                   ),
                   GestureDetector(
@@ -200,6 +219,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 suffixIcon: Tooltip(
                   message: 'Email can’t be edited',
                   child: Icon(Icons.lock),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: locationController,
+              decoration: InputDecoration(
+                labelText: 'Your Location',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.location_on, color: Colors.red),
+                  tooltip: 'Fetch current location',
+                  onPressed: fetchCurrentLocation,
                 ),
               ),
             ),

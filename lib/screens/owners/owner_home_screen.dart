@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:provider/provider.dart';
 import '../../theme/theme_provider.dart';
+import '../../widgets/owners/Owner_Custom_Drawer.dart';
 
 class OwnerHomeScreen extends StatefulWidget {
   const OwnerHomeScreen({Key? key}) : super(key: key);
@@ -15,32 +15,13 @@ class OwnerHomeScreen extends StatefulWidget {
 }
 
 class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
-  String ownerName = '';
-  String ownerEmail = '';
-  String photoUrl = '';
-  String currentLocation = 'Triplicane'; // ✅ Default
-
+  String currentLocation = 'Fetching...';
   final user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
-    loadOwnerInfo();
-    _detectLocation(); // 🌍 Auto-detect on start
-  }
-
-  Future<void> loadOwnerInfo() async {
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('owners').doc(user!.uid).get();
-      if (doc.exists) {
-        setState(() {
-          ownerName = doc['name'] ?? '';
-          ownerEmail = doc['email'] ?? '';
-          photoUrl = doc['photoUrl'] ?? '';
-          currentLocation = doc['location'] ?? 'Triplicane';
-        });
-      }
-    }
+    _detectLocation(); // 🌍 auto detect
   }
 
   Future<void> _detectLocation() async {
@@ -51,25 +32,22 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) return;
+        if (permission != LocationPermission.whileInUse &&
+            permission != LocationPermission.always) return;
       }
 
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude);
 
-      // 🌐 Reverse geocoding
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-      String readableLocation = 'Your Location';
+      String readableLocation = placemarks.isNotEmpty
+          ? "${placemarks.first.subLocality}, ${placemarks.first.locality}"
+          : 'Unknown';
 
-      if (placemarks.isNotEmpty) {
-        final place = placemarks.first;
-        readableLocation = "${place.subLocality}, ${place.locality}";
-      }
+      setState(() => currentLocation = readableLocation);
 
-      setState(() {
-        currentLocation = readableLocation;
-      });
-
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final uid = user?.uid;
       if (uid != null) {
         await FirebaseFirestore.instance.collection('owners').doc(uid).update({
           'location': readableLocation,
@@ -80,7 +58,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
     }
   }
 
-  Future<void> _enterManualLocation() async {
+  void _enterManualLocation() async {
     final controller = TextEditingController();
     await showDialog(
       context: context,
@@ -88,21 +66,19 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
         title: const Text("Enter Your Location"),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'E.g. Triplicane'),
+          decoration: const InputDecoration(hintText: 'Eg: T Nagar'),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
-              final uid = FirebaseAuth.instance.currentUser?.uid;
+              final uid = user?.uid;
               if (uid != null) {
                 await FirebaseFirestore.instance.collection('owners').doc(uid).update({
                   'location': controller.text,
                 });
               }
-              setState(() {
-                currentLocation = controller.text;
-              });
+              setState(() => currentLocation = controller.text);
               Navigator.pop(context);
             },
             child: const Text("Save"),
@@ -138,149 +114,88 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
     );
   }
 
-  Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/select-role', (route) => false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("PlayArena Owner"),
-        backgroundColor: Colors.teal[800],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.location_on_outlined),
-            tooltip: 'Update Location',
-            onPressed: _showLocationOptions,
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(ownerName),
-              accountEmail: Text(ownerEmail),
-              currentAccountPicture: CircleAvatar(
-                backgroundImage: photoUrl.isNotEmpty
-                    ? NetworkImage(photoUrl)
-                    : const AssetImage('assets/default_user.png') as ImageProvider,
-              ),
-              decoration: BoxDecoration(color: Colors.teal[800]),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text("Home"),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text("Dashboard"),
-              onTap: () => Navigator.pushNamed(context, '/owner/dashboard'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text("Add Turf"),
-              onTap: () => Navigator.pushNamed(context, '/owner/add-turf'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text("My Turfs"),
-              onTap: () => Navigator.pushNamed(context, '/owner/my-turf-list'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.calendar_month),
-              title: const Text("Slot Management"),
-              onTap: () => Navigator.pushNamed(context, '/owner/slot-management'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.book),
-              title: const Text("View Bookings"),
-              onTap: () => Navigator.pushNamed(context, '/owner/view-bookings'),
-            ),
-            SwitchListTile(
-              title: const Text("Dark Theme"),
-              secondary: const Icon(Icons.dark_mode),
-              value: themeProvider.isDarkMode,
-              onChanged: (val) async {
-                themeProvider.toggleTheme(val);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('isDarkMode', val);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text("About App"),
-              onTap: () => Navigator.pushNamed(context, '/about'),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout", style: TextStyle(color: Colors.red)),
-              onTap: logout,
-            ),
-          ],
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Welcome, $ownerName 👋",
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text("📍 $currentLocation", style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 24),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _OwnerActionCard(
-                    icon: Icons.calendar_month,
-                    title: 'Bookings',
-                    color: Colors.blue,
-                    onTap: () => Navigator.pushNamed(context, '/owner/bookings'),
-                  ),
-                  _OwnerActionCard(
-                    icon: Icons.attach_money,
-                    title: 'Earnings',
-                    color: Colors.green,
-                    onTap: () => Navigator.pushNamed(context, '/owner/earnings'),
-                  ),
-                  _OwnerActionCard(
-                    icon: Icons.sports_soccer,
-                    title: 'Manage Turf',
-                    color: Colors.orange,
-                    onTap: () => Navigator.pushNamed(context, '/owner/turf'),
-                  ),
-                  _OwnerActionCard(
-                    icon: Icons.message,
-                    title: 'Messages',
-                    color: Colors.purple,
-                    onTap: () => Navigator.pushNamed(context, '/owner/messages'),
-                  ),
-                ],
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('owners').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final ownerName = data['name'] ?? '';
+        final locationFromDB = data['location'] ?? currentLocation;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("PlayArena Owner"),
+            backgroundColor: Colors.teal[800],
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.location_on_outlined),
+                tooltip: 'Update Location',
+                onPressed: _showLocationOptions,
               ),
             ],
           ),
-        ),
-      ),
+          drawer: const CustomOwnerDrawer(),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Welcome, $ownerName 👋",
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("📍 $locationFromDB",
+                      style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 24),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _OwnerActionCard(
+                        icon: Icons.calendar_month,
+                        title: 'Bookings',
+                        color: Colors.blue,
+                        onTap: () => Navigator.pushNamed(context, '/owner/bookings'),
+                      ),
+                      _OwnerActionCard(
+                        icon: Icons.attach_money,
+                        title: 'Earnings',
+                        color: Colors.green,
+                        onTap: () => Navigator.pushNamed(context, '/owner/earnings'),
+                      ),
+                      _OwnerActionCard(
+                        icon: Icons.sports_soccer,
+                        title: 'Manage Turf',
+                        color: Colors.orange,
+                        onTap: () => Navigator.pushNamed(context, '/owner/turf'),
+                      ),
+                      _OwnerActionCard(
+                        icon: Icons.dashboard,
+                        title: 'Dashboard',
+                        color: Colors.indigo,
+                        onTap: () => Navigator.pushNamed(context, '/owner/dashboard'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

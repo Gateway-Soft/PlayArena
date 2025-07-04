@@ -1,136 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class OwnerDashboardScreen extends StatelessWidget {
-  const OwnerDashboardScreen({Key? key}) : super(key: key);
+class OwnerDashboardScreen extends StatefulWidget {
+  const OwnerDashboardScreen({super.key});
 
-  void _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/select-role', (_) => false);
-    }
-  }
+  @override
+  State<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();
+}
+
+class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
+  String ownerId = FirebaseAuth.instance.currentUser!.uid;
 
   @override
   Widget build(BuildContext context) {
-    String turfName = "GreenField Turf";
-    String turfLocation = "Chennai, Tamil Nadu";
-    double rating = 4.5;
-    bool isAvailable = true;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Owner Dashboard"),
+        title: const Text("Dashboard"),
         backgroundColor: Colors.teal[800],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-          )
-        ],
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
           children: [
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              elevation: 4,
-              child: ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset("assets/turf_sample.jpg", width: 60, height: 60, fit: BoxFit.cover),
-                ),
-                title: Text(turfName),
-                subtitle: Text(turfLocation),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber),
-                    Text(rating.toString())
-                  ],
-                ),
-              ),
+            _DashboardCard(
+              title: "My Turfs",
+              icon: Icons.sports_soccer,
+              color: Colors.orange,
+              valueStream: FirebaseFirestore.instance
+                  .collection('turfs')
+                  .where('ownerId', isEqualTo: ownerId)
+                  .snapshots(),
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                _DashboardStat(title: "Total Bookings", value: "124"),
-                _DashboardStat(title: "Upcoming", value: "18"),
-                _DashboardStat(title: "Completed", value: "106"),
-              ],
+            _DashboardCard(
+              title: "Total Bookings",
+              icon: Icons.calendar_month,
+              color: Colors.blue,
+              valueStream: FirebaseFirestore.instance
+                  .collection('bookings')
+                  .where('ownerId', isEqualTo: ownerId)
+                  .snapshots(),
             ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: const Icon(Icons.account_balance_wallet, color: Colors.green, size: 40),
-                title: const Text("Total Earnings"),
-                subtitle: const Text("₹ 42,500"),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => Navigator.pushNamed(context, '/owner/earnings'),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.edit_location_alt, color: Colors.blue),
-                    title: const Text("Edit Turf Details"),
-                    onTap: () => Navigator.pushNamed(context, '/owner/edit-turf'),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.calendar_today, color: Colors.orange),
-                    title: const Text("Manage Availability"),
-                    onTap: () => Navigator.pushNamed(context, '/owner/slots'),
-                  ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: const Text("Turf Availability"),
-                    value: isAvailable,
-                    onChanged: (val) {},
-                    secondary: const Icon(Icons.toggle_on, color: Colors.teal),
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: const Icon(Icons.message, color: Colors.purple),
-                title: const Text("User Messages"),
-                subtitle: const Text("3 New Messages"),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => Navigator.pushNamed(context, '/owner/messages'),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/owner/add-turf'),
-              icon: const Icon(Icons.add_business),
-              label: const Text("Add New Turf"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () => _logout(context),
-              icon: const Icon(Icons.logout),
-              label: const Text("Logout"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
+            _DashboardCard(
+              title: "Total Earnings",
+              icon: Icons.attach_money,
+              color: Colors.green,
+              valueStream: FirebaseFirestore.instance
+                  .collection('bookings')
+                  .where('ownerId', isEqualTo: ownerId)
+                  .snapshots(),
+              calculateEarnings: true,
             ),
           ],
         ),
@@ -139,19 +61,68 @@ class OwnerDashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardStat extends StatelessWidget {
+class _DashboardCard extends StatelessWidget {
   final String title;
-  final String value;
-  const _DashboardStat({required this.title, required this.value});
+  final IconData icon;
+  final Color color;
+  final Stream<QuerySnapshot> valueStream;
+  final bool calculateEarnings;
+
+  const _DashboardCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.valueStream,
+    this.calculateEarnings = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-      ],
+    return StreamBuilder<QuerySnapshot>(
+      stream: valueStream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Card(
+            elevation: 3,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final count = snapshot.data!.docs.length;
+
+        double totalEarnings = 0;
+        if (calculateEarnings) {
+          for (var doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final price = double.tryParse(data['price'].toString()) ?? 0;
+            totalEarnings += price;
+          }
+        }
+
+        return Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 40, color: color),
+                const SizedBox(height: 12),
+                Text(
+                  calculateEarnings
+                      ? "₹ ${totalEarnings.toStringAsFixed(2)}"
+                      : "$count",
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                Text(title, style: const TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
