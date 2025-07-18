@@ -4,13 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart'; // <-- New import
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../ providers/auth_provider.dart';
-
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -62,17 +62,46 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> pickProfileImage() async {
     try {
       await requestPermission();
+
       final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (picked != null) {
-        setState(() => newProfileImage = File(picked.path));
+      if (picked == null) return;
+
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 100,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: false,
+            // 👇 move aspectRatioPresets inside AndroidUiSettings
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: false,
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        setState(() => newProfileImage = File(croppedFile.path));
       }
     } catch (e) {
-      debugPrint("Image pick error: $e");
+      debugPrint("Image pick/crop error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error picking image: $e")),
+        SnackBar(content: Text("Error picking or cropping image: $e")),
       );
     }
   }
+
 
   Future<void> fetchCurrentLocation() async {
     try {

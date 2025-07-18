@@ -8,6 +8,7 @@ class TurfModel {
   final int pricePerHour;
   final int maxPlayers;
   final String ownerId;
+  final List<String> availableSlots;
 
   TurfModel({
     required this.id,
@@ -19,6 +20,7 @@ class TurfModel {
     required this.pricePerHour,
     required this.maxPlayers,
     required this.ownerId,
+    required this.availableSlots,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,22 @@ class TurfModel {
       'pricePerHour': pricePerHour,
       'maxPlayers': maxPlayers,
       'ownerId': ownerId,
+      'availableSlots': availableSlots,
     };
+  }
+
+  factory TurfModel.fromMap(Map<String, dynamic> map) {
+    return TurfModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      location: map['location'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      openTime: map['openTime'] ?? '',
+      closeTime: map['closeTime'] ?? '',
+      pricePerHour: map['pricePerHour'] ?? 0,
+      maxPlayers: map['maxPlayers'] ?? 0,
+      ownerId: map['ownerId'] ?? '',
+      availableSlots: List<String>.from(map['availableSlots'] ?? []),
+    );
   }
 }

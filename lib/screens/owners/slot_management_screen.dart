@@ -1,6 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class Slot {
+  final DateTime date;
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
+
+  Slot({
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+  });
+}
 
 class SlotManagementScreen extends StatefulWidget {
   const SlotManagementScreen({super.key});
@@ -10,132 +21,155 @@ class SlotManagementScreen extends StatefulWidget {
 }
 
 class _SlotManagementScreenState extends State<SlotManagementScreen> {
-  final currentUser = FirebaseAuth.instance.currentUser;
-  final slotController = TextEditingController();
-  String? selectedTurfId;
+  final List<Slot> _slots = [];
 
-  Future<List<Map<String, dynamic>>> fetchOwnerTurfs() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('turfs')
-        .where('ownerId', isEqualTo: currentUser!.uid)
-        .get();
+  DateTime? _selectedDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
 
-    return snapshot.docs.map((doc) {
-      return {
-        'id': doc.id,
-        'name': doc['name'],
-      };
-    }).toList();
+  final DateFormat _dateFormatter = DateFormat('yyyy-MM-dd');
+  final DateFormat _timeFormatter = DateFormat('hh:mm a');
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
-  Stream<QuerySnapshot> getSlotStream(String turfId) {
-    return FirebaseFirestore.instance
-        .collection('turfs')
-        .doc(turfId)
-        .collection('slots')
-        .orderBy('time')
-        .snapshots();
+  Future<void> _pickTime({required bool isStart}) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startTime = picked;
+        } else {
+          _endTime = picked;
+        }
+      });
+    }
   }
 
-  Future<void> addSlot(String time) async {
-    if (selectedTurfId == null || time.isEmpty) return;
-    final slotRef = FirebaseFirestore.instance
-        .collection('turfs')
-        .doc(selectedTurfId)
-        .collection('slots');
-
-    await slotRef.add({'time': time});
-    slotController.clear();
+  void _addSlot() {
+    if (_selectedDate != null && _startTime != null && _endTime != null) {
+      final slot = Slot(
+        date: _selectedDate!,
+        startTime: _startTime!,
+        endTime: _endTime!,
+      );
+      setState(() {
+        _slots.add(slot);
+        _selectedDate = null;
+        _startTime = null;
+        _endTime = null;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all slot fields')),
+      );
+    }
   }
 
-  Future<void> deleteSlot(String slotId) async {
-    await FirebaseFirestore.instance
-        .collection('turfs')
-        .doc(selectedTurfId)
-        .collection('slots')
-        .doc(slotId)
-        .delete();
+  String _formatTimeOfDay(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return _timeFormatter.format(dt);
   }
 
-  @override
-  void dispose() {
-    slotController.dispose();
-    super.dispose();
+  void _removeSlot(int index) {
+    setState(() {
+      _slots.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Slot Management"),
+        title: const Text('Slot Management'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: fetchOwnerTurfs(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final turfs = snapshot.data!;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Add Slot Fields
+            Row(
               children: [
-                DropdownButtonFormField<String>(
-                  hint: const Text("Select Turf"),
-                  value: selectedTurfId,
-                  items: turfs.map((turf) {
-                    return DropdownMenuItem<String>(
-                      value: turf['id'],
-                      child: Text(turf['name']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => selectedTurfId = value);
-                  },
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _pickDate,
+                    child: Text(
+                      _selectedDate == null
+                          ? 'Pick Date'
+                          : _dateFormatter.format(_selectedDate!),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                if (selectedTurfId != null) ...[
-                  TextField(
-                    controller: slotController,
-                    decoration: InputDecoration(
-                      labelText: "Enter Slot Time (e.g. 5:00 PM - 6:00 PM)",
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => addSlot(slotController.text.trim()),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _pickTime(isStart: true),
+                    child: Text(
+                      _startTime == null
+                          ? 'Start Time'
+                          : _formatTimeOfDay(_startTime!),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _pickTime(isStart: false),
+                    child: Text(
+                      _endTime == null
+                          ? 'End Time'
+                          : _formatTimeOfDay(_endTime!),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _addSlot,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Slot'),
+            ),
+            const SizedBox(height: 20),
+
+            // Slots List
+            Expanded(
+              child: _slots.isEmpty
+                  ? const Center(child: Text('No slots added yet'))
+                  : ListView.builder(
+                itemCount: _slots.length,
+                itemBuilder: (context, index) {
+                  final slot = _slots[index];
+                  return Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.access_time),
+                      title: Text(
+                          '${_dateFormatter.format(slot.date)} | ${_formatTimeOfDay(slot.startTime)} - ${_formatTimeOfDay(slot.endTime)}'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _removeSlot(index),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: getSlotStream(selectedTurfId!),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                        final slots = snapshot.data!.docs;
-
-                        if (slots.isEmpty) return const Text("No slots added yet.");
-
-                        return ListView.builder(
-                          itemCount: slots.length,
-                          itemBuilder: (context, index) {
-                            final slot = slots[index];
-                            final time = slot['time'];
-                            return ListTile(
-                              title: Text(time),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => deleteSlot(slot.id),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ],
-            );
-          },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

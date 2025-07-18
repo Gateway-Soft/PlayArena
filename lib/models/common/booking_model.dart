@@ -1,60 +1,51 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class BookingModel {
-  final String bookingId;
-  final String userId;
-  final String userName;
+  final String id;
   final String turfId;
   final String turfName;
-  final DateTime bookingDate;
+  final String userId;
+  final String userName;
   final DateTime startTime;
   final DateTime endTime;
-  final String timeSlot;
-  final double amountPaid;
-  final String status;
+  final int amountPaid;
+  final String status; // e.g., "confirmed", "pending", etc.
 
   BookingModel({
-    required this.bookingId,
-    required this.userId,
-    required this.userName,
+    required this.id,
     required this.turfId,
     required this.turfName,
-    required this.bookingDate,
+    required this.userId,
+    required this.userName,
     required this.startTime,
     required this.endTime,
-    required this.timeSlot,
     required this.amountPaid,
     required this.status,
   });
 
-  factory BookingModel.fromMap(Map<String, dynamic> map, String id) {
-    return BookingModel(
-      bookingId: id,
-      userId: map['userId'] ?? '',
-      userName: map['userName'] ?? '',
-      turfId: map['turfId'] ?? '',
-      turfName: map['turfName'] ?? '',
-      bookingDate: (map['bookingDate'] as Timestamp).toDate(),
-      startTime: (map['startTime'] as Timestamp).toDate(),
-      endTime: (map['endTime'] as Timestamp).toDate(),
-      timeSlot: map['timeSlot'] ?? '',
-      amountPaid: (map['amountPaid'] ?? 0).toDouble(),
-      status: map['status'] ?? 'pending',
-    );
-  }
-
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
-      'userName': userName,
+      'id': id,
       'turfId': turfId,
       'turfName': turfName,
-      'bookingDate': bookingDate,
-      'startTime': startTime,
-      'endTime': endTime,
-      'timeSlot': timeSlot,
+      'userId': userId,
+      'userName': userName,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
       'amountPaid': amountPaid,
       'status': status,
     };
+  }
+
+  factory BookingModel.fromMap(Map<String, dynamic> map) {
+    return BookingModel(
+      id: map['id'] ?? '',
+      turfId: map['turfId'] ?? '',
+      turfName: map['turfName'] ?? '',
+      userId: map['userId'] ?? '',
+      userName: map['userName'] ?? '',
+      startTime: DateTime.parse(map['startTime']),
+      endTime: DateTime.parse(map['endTime']),
+      amountPaid: map['amountPaid'] ?? 0,
+      status: map['status'] ?? 'pending',
+    );
   }
 }
