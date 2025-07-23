@@ -3,53 +3,60 @@ class TurfModel {
   final String name;
   final String location;
   final String imageUrl;
-  final String openTime;
-  final String closeTime;
-  final int pricePerHour;
-  final int maxPlayers;
+  final String description;
+  final double pricePerHour;
+  final List<String> amenities;
+  final String openingTime;
+  final String closingTime;
+  final double price; // 👈 new
+  final String phone; // 👈 new
   final String ownerId;
-  final List<String> availableSlots;
 
   TurfModel({
     required this.id,
     required this.name,
     required this.location,
     required this.imageUrl,
-    required this.openTime,
-    required this.closeTime,
+    required this.description,
     required this.pricePerHour,
-    required this.maxPlayers,
+    required this.amenities,
+    required this.openingTime,
+    required this.closingTime,
+    required this.price,
+    required this.phone,
     required this.ownerId,
-    required this.availableSlots,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'location': location,
-      'imageUrl': imageUrl,
-      'openTime': openTime,
-      'closeTime': closeTime,
-      'pricePerHour': pricePerHour,
-      'maxPlayers': maxPlayers,
-      'ownerId': ownerId,
-      'availableSlots': availableSlots,
-    };
-  }
-
-  factory TurfModel.fromMap(Map<String, dynamic> map) {
+  factory TurfModel.fromMap(Map<String, dynamic> map, String docId) {
     return TurfModel(
-      id: map['id'] ?? '',
+      id: docId,
       name: map['name'] ?? '',
       location: map['location'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      openTime: map['openTime'] ?? '',
-      closeTime: map['closeTime'] ?? '',
-      pricePerHour: map['pricePerHour'] ?? 0,
-      maxPlayers: map['maxPlayers'] ?? 0,
+      description: map['description'] ?? '',
+      pricePerHour: (map['pricePerHour'] ?? 0).toDouble(),
+      amenities: List<String>.from(map['amenities'] ?? []),
+      openingTime: map['openingTime'] ?? '',
+      closingTime: map['closingTime'] ?? '',
       ownerId: map['ownerId'] ?? '',
-      availableSlots: List<String>.from(map['availableSlots'] ?? []),
+      price: (map['price'] ?? 0).toDouble(),
+      phone: map['phone'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'location': location,
+      'imageUrl': imageUrl,
+      'description': description,
+      'pricePerHour': pricePerHour,
+      'amenities': amenities,
+      'openingTime': openingTime,
+      'closingTime': closingTime,
+      'ownerId': ownerId,
+      'price': price,
+      'phone': phone,
+    };
   }
 }

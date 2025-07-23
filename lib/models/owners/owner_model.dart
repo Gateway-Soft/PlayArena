@@ -7,6 +7,7 @@ class OwnerModel {
   final String photoUrl;
   final String role;
   final DateTime createdAt;
+  final String mobile; // ✅ Add this
 
   OwnerModel({
     required this.uid,
@@ -15,6 +16,7 @@ class OwnerModel {
     required this.photoUrl,
     required this.role,
     required this.createdAt,
+    required this.mobile,
   });
 
   factory OwnerModel.fromMap(Map<String, dynamic> data, String uid) {
@@ -25,6 +27,7 @@ class OwnerModel {
       photoUrl: data['photoUrl'] ?? '',
       role: data['role'] ?? 'owner',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      mobile: data['mobile'] ?? '',
     );
   }
 
@@ -35,6 +38,7 @@ class OwnerModel {
       'photoUrl': photoUrl,
       'role': role,
       'createdAt': Timestamp.fromDate(createdAt),
+      'mobile': mobile,
     };
   }
 }

@@ -115,8 +115,8 @@ class MyApp extends StatelessWidget {
         '/owner/add-turf': (context) => const AddTurfScreen(),
         '/owner/edit-turf': (context) => const EditTurfScreen(turfId: ''),
         '/owner/my-turf-list': (context) => const MyTurfListScreen(),
-        '/owner/slot-management': (context) => const SlotManagementScreen(),
-        '/owner/view-bookings': (context) => const ViewBookingsScreen(),
+        '/owner/slot-management': (context) => const SlotManagementScreen(turfId: '',),
+        '/owner/view-bookings': (context) => const ViewBookingsScreen(turfId: '',),
       },
     );
   }

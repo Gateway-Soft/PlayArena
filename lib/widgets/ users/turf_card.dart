@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../models/common/turf_model.dart';
 import '../../screens/users/turf_detail_screen.dart';
 
 class TurfCard extends StatelessWidget {
   final Map<String, dynamic> turfData;
   final String turfId;
 
-  const TurfCard({super.key, required this.turfData, required this.turfId});
+  const TurfCard({
+    Key? key,
+    required this.turfData,
+    required this.turfId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final String name = turfData['name'] ?? 'Turf Name';
-    final String location = turfData['location'] ?? 'Unknown';
-    final String imageUrl = turfData['imageUrl'] ?? '';
+    final turf = TurfModel.fromMap(turfData, turfId);
 
     return Card(
       elevation: 4,
@@ -21,22 +24,21 @@ class TurfCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TurfDetailScreen(
-                turfId: turfId,
-                turfData: turfData,
-              ),
+              builder: (_) => TurfDetailScreen(turf: turf),
             ),
           );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
+            // Force a consistent image size
+            SizedBox(
+              height: 100,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: imageUrl.isNotEmpty
+                child: turf.imageUrl.isNotEmpty
                     ? Image.network(
-                  imageUrl,
+                  turf.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
                       Image.asset('assets/turf_sample.jpg', fit: BoxFit.cover),
@@ -44,15 +46,35 @@ class TurfCard extends StatelessWidget {
                     : Image.asset('assets/turf_sample.jpg', fit: BoxFit.cover),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(location, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
+
+            // Wrap text area in Expanded + padding
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      turf.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      turf.location,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
