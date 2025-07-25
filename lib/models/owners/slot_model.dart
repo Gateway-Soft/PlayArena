@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class SlotModel {
   final String id;
   final String turfId;
   final String turfName;
-  final String timeSlot; // e.g., "Evening Batch"
+  final String timeSlot; // e.g., "Evening"
   final String time;     // e.g., "17:00"
   final DateTime date;
   final String userId;
@@ -19,6 +21,7 @@ class SlotModel {
     required this.isBooked,
   });
 
+  /// 🔄 Deserialize from Firestore
   factory SlotModel.fromMap(Map<String, dynamic> map, String id) {
     return SlotModel(
       id: id,
@@ -27,20 +30,23 @@ class SlotModel {
       timeSlot: map['timeSlot'] ?? '',
       time: map['time'] ?? '',
       date: map['date'] != null
-          ? DateTime.tryParse(map['date']) ?? DateTime.now()
+          ? (map['date'] is Timestamp
+          ? (map['date'] as Timestamp).toDate()
+          : DateTime.tryParse(map['date'].toString()) ?? DateTime.now())
           : DateTime.now(),
       userId: map['userId'] ?? '',
       isBooked: map['isBooked'] ?? false,
     );
   }
 
+  /// 🔁 Serialize to Firestore
   Map<String, dynamic> toMap() {
     return {
       'turfId': turfId,
       'turfName': turfName,
       'timeSlot': timeSlot,
       'time': time,
-      'date': date.toIso8601String(),
+      'date': date,
       'userId': userId,
       'isBooked': isBooked,
     };
